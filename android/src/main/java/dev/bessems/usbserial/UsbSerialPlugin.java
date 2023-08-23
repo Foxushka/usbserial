@@ -1,5 +1,6 @@
 package dev.bessems.usbserial;
 
+import android.os.Build;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
