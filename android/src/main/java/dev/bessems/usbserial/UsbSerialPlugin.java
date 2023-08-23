@@ -29,9 +29,10 @@ import io.flutter.plugin.common.BinaryMessenger;
 import androidx.annotation.NonNull;
 
 
-/** UsbSerialPlugin */
+/**
+ * UsbSerialPlugin
+ */
 public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler {
-
     private final String TAG = UsbSerialPortAdapter.class.getSimpleName();
 
     private android.content.Context m_Context;
@@ -51,16 +52,26 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(ACTION_USB_ATTACHED)) {
                 Log.d(TAG, "ACTION_USB_ATTACHED");
-                if ( m_EventSink != null ) {
-                    UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                if (m_EventSink != null) {
+                    UsbDevice device;
+                    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                    } else {
+                        device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    }
                     HashMap<String, Object> msg = serializeDevice(device);
                     msg.put("event", ACTION_USB_ATTACHED);
                     m_EventSink.success(msg);
                 }
             } else if (intent.getAction().equals(ACTION_USB_DETACHED)) {
                 Log.d(TAG, "ACTION_USB_DETACHED");
-                if ( m_EventSink != null ) {
-                    UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                if (m_EventSink != null) {
+                    UsbDevice device;
+                    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                    } else {
+                        device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    }
                     HashMap<String, Object> msg = serializeDevice(device);
                     msg.put("event", ACTION_USB_DETACHED);
                     m_EventSink.success(msg);
@@ -79,16 +90,16 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
 
     private interface AcquirePermissionCallback {
         void onSuccess(UsbDevice device);
+
         void onFailed(UsbDevice device);
     }
+
     private void acquirePermissions(UsbDevice device, AcquirePermissionCallback cb) {
-
-        class BRC2 extends  BroadcastReceiver {
-
+        class BRC2 extends BroadcastReceiver {
             private UsbDevice m_Device;
             private AcquirePermissionCallback m_CB;
 
-            BRC2(UsbDevice device, AcquirePermissionCallback cb ) {
+            BRC2(UsbDevice device, AcquirePermissionCallback cb) {
                 m_Device = device;
                 m_CB = cb;
             }
@@ -133,9 +144,7 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
     }
 
     private void openDevice(String type, UsbDevice device, int iface, Result result, boolean allowAcquirePermission) {
-
         final AcquirePermissionCallback cb = new AcquirePermissionCallback() {
-
             @Override
             public void onSuccess(UsbDevice device) {
                 openDevice(type, device, iface, result, false);
@@ -150,13 +159,13 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
         try {
             UsbDeviceConnection connection = m_Manager.openDevice(device);
 
-            if ( connection == null && allowAcquirePermission ) {
+            if (connection == null && allowAcquirePermission) {
                 acquirePermissions(device, cb);
                 return;
             }
 
             UsbSerialDevice serialDeviceDevice;
-            if ( type.equals("") ) {
+            if (type.equals("")) {
                 serialDeviceDevice = UsbSerialDevice.createUsbSerialDevice(device, connection, iface);
             } else {
                 serialDeviceDevice = UsbSerialDevice.createUsbSerialDevice(type, device, connection, iface);
@@ -171,15 +180,14 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
             }
             result.error(TAG, "Not an Serial device.", null);
 
-        } catch ( java.lang.SecurityException e ) {
-
-            if ( allowAcquirePermission ) {
+        } catch (java.lang.SecurityException e) {
+            if (allowAcquirePermission) {
                 acquirePermissions(device, cb);
                 return;
             } else {
                 result.error(TAG, "Failed to acquire USB permission.", null);
             }
-        } catch ( java.lang.Exception e ) {
+        } catch (java.lang.Exception e) {
             result.error(TAG, "Failed to acquire USB device.", null);
         }
     }
@@ -188,7 +196,7 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
         Map<String, UsbDevice> devices = m_Manager.getDeviceList();
         for (UsbDevice device : devices.values()) {
 
-            if ( deviceId == device.getDeviceId() || (device.getVendorId() == vid && device.getProductId() == pid) ) {
+            if (deviceId == device.getDeviceId() || (device.getVendorId() == vid && device.getProductId() == pid)) {
                 openDevice(type, device, iface, result, true);
                 return;
             }
@@ -209,7 +217,7 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
             /* if the app targets SDK >= android.os.Build.VERSION_CODES.Q and the app does not have permission to read from the device. */
             try {
                 dev.put("serialNumber", device.getSerialNumber());
-            } catch  ( java.lang.SecurityException e ) {
+            } catch (java.lang.SecurityException e) {
             }
         }
         dev.put("deviceId", device.getDeviceId());
@@ -218,7 +226,7 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
 
     private void listDevices(Result result) {
         Map<String, UsbDevice> devices = m_Manager.getDeviceList();
-        if ( devices == null ) {
+        if (devices == null) {
             result.error(TAG, "Could not get USB device list.", null);
             return;
         }
@@ -242,8 +250,8 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
         m_EventSink = null;
     }
 
-
     private EventChannel m_EventChannel;
+
     private void register(BinaryMessenger messenger, android.content.Context context) {
         m_Messenger = messenger;
         m_Context = context;
@@ -266,7 +274,6 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
         m_Messenger = null;
     }
 
-
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
     private MethodChannel m_Channel;
@@ -287,13 +294,9 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-
         switch (call.method) {
-
             case "create": {
-                createTyped((String)call.argument("type"), (int)call.argument("vid"),
-                        (int)call.argument("pid"), (int)call.argument("deviceId"),
-                        (int)call.argument("interface"), result);
+                createTyped((String) call.argument("type"), (int) call.argument("vid"), (int) call.argument("pid"), (int) call.argument("deviceId"), (int) call.argument("interface"), result);
                 break;
             }
             case "listDevices":
@@ -303,9 +306,7 @@ public class UsbSerialPlugin implements FlutterPlugin, MethodCallHandler, EventC
             default:
                 result.notImplemented();
                 break;
-            }
-
+        }
     }
-
 }
 

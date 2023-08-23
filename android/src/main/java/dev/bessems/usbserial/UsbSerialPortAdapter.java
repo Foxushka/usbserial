@@ -16,7 +16,6 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.BinaryMessenger;
 
 public class UsbSerialPortAdapter implements MethodCallHandler, EventChannel.StreamHandler {
-
     private final String TAG = UsbSerialPortAdapter.class.getSimpleName();
 
     private int m_InterfaceId;
@@ -51,20 +50,18 @@ public class UsbSerialPortAdapter implements MethodCallHandler, EventChannel.Str
         m_SerialDevice.setParity(parity);
     }
 
-    private void setFlowControl( int flowControl ) {
+    private void setFlowControl(int flowControl) {
         m_SerialDevice.setFlowControl(flowControl);
     }
 
     private UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() {
-
         @Override
-        public void onReceivedData(byte[] arg0)
-        {
-            if ( m_EventSink != null ) {
+        public void onReceivedData(byte[] arg0) {
+            if (m_EventSink != null) {
                 m_handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        if ( m_EventSink != null ) {
+                        if (m_EventSink != null) {
                             m_EventSink.success(arg0);
                         }
                     }
@@ -75,7 +72,7 @@ public class UsbSerialPortAdapter implements MethodCallHandler, EventChannel.Str
     };
 
     private Boolean open() {
-        if ( m_SerialDevice.open() ) {
+        if (m_SerialDevice.open()) {
             m_SerialDevice.read(mCallback);
             return true;
         } else {
@@ -88,13 +85,12 @@ public class UsbSerialPortAdapter implements MethodCallHandler, EventChannel.Str
         return true;
     }
 
-    private void write( byte[] data ) {
+    private void write(byte[] data) {
         m_SerialDevice.write(data);
     }
 
     // return true if the object is to be kept, false if it is to be destroyed.
     public void onMethodCall(MethodCall call, Result result) {
-
         switch (call.method) {
             case "close":
                 result.success(close());
@@ -103,21 +99,17 @@ public class UsbSerialPortAdapter implements MethodCallHandler, EventChannel.Str
                 result.success(open());
                 break;
             case "write":
-                write((byte[])call.argument("data"));
+                write((byte[]) call.argument("data"));
                 result.success(true);
                 break;
-
             case "setPortParameters":
-                setPortParameters((int) call.argument("baudRate"), (int) call.argument("dataBits"),
-                        (int) call.argument("stopBits"), (int) call.argument("parity"));
+                setPortParameters((int) call.argument("baudRate"), (int) call.argument("dataBits"), (int) call.argument("stopBits"), (int) call.argument("parity"));
                 result.success(null);
                 break;
-
             case "setFlowControl":
                 setFlowControl((int) call.argument("flowControl"));
                 result.success(null);
                 break;
-
             case "setDTR": {
                 boolean v = call.argument("value");
                 m_SerialDevice.setDTR(v);
@@ -152,8 +144,4 @@ public class UsbSerialPortAdapter implements MethodCallHandler, EventChannel.Str
         m_EventSink = null;
 
     }
-
-
-
-
 }
